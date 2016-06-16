@@ -1,0 +1,36 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY Card7Seg IS
+	PORT(
+	   	card : IN  STD_LOGIC_VECTOR(3 DOWNTO 0); -- value of card
+	   	seg7 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0)  -- 7-seg LED pattern
+	);
+END;
+
+architecture behavioural of Card7Seg is
+begin
+	process(card)
+		begin
+			case card is
+				when "0000" => seg7 <= "1111111"; --Blank
+				when "0001" => seg7 <= "0001000"; --A
+				when "0010" => seg7 <= "0100100"; --2
+				when "0011" => seg7 <= "0110000"; --3
+				when "0100" => seg7 <= "0011001"; --4
+				when "0101" => seg7 <= "0010010"; --5
+				when "0110" => seg7 <= "0000010"; --6
+				when "0111" => seg7 <= "1111000"; --7
+				when "1000" => seg7 <= "0000000"; --8
+				when "1001" => seg7 <= "0010000"; --9
+				when "1010" => seg7 <= "1000000"; --0 for 10
+				when "1011" => seg7 <= "1110000"; --J
+				when "1100" => seg7 <= "0011000"; --Q
+				when "1101" => seg7 <= "0000110"; --K
+				when others => seg7 <= "0111111"; --Others
+				
+			end case;
+
+	end process;
+	
+end behavioural;
