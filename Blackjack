@@ -1,0 +1,119 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY BlackJack IS
+	PORT(
+		CLOCK_50 : in std_logic; -- A 50MHz clock
+	   	SW   : in  std_logic_vector(17 downto 0); -- SW(0) = player stands
+			KEY  : in  std_logic_vector(3 downto 0);  -- KEY(3) reset, KEY(0) advance
+	   	LEDR : out std_logic_vector(17 downto 0); -- red LEDs: dealer wins
+	   	LEDG : out std_logic_vector(7 downto 0);  -- green LEDs: player wins
+
+	   	HEX7 : out std_logic_vector(6 downto 0);  -- dealer, fourth card
+	   	HEX6 : out std_logic_vector(6 downto 0);  -- dealer, third card
+	   	HEX5 : out std_logic_vector(6 downto 0);  -- dealer, second card
+	   	HEX4 : out std_logic_vector(6 downto 0);   -- dealer, first card
+
+	   	HEX3 : out std_logic_vector(6 downto 0);  -- player, fourth card
+	   	HEX2 : out std_logic_vector(6 downto 0);  -- player, third card
+	   	HEX1 : out std_logic_vector(6 downto 0);  -- player, second card
+	   	HEX0 : out std_logic_vector(6 downto 0)   -- player, first card
+	);
+END;
+
+
+ARCHITECTURE Behavioural OF BlackJack IS
+
+	COMPONENT Card7Seg IS
+	PORT(
+	   	card : IN  STD_LOGIC_VECTOR(3 DOWNTO 0); -- value of card
+	   	seg7 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0)  -- 7-seg LED pattern
+	);
+	END COMPONENT;
+
+	COMPONENT DataPath IS
+	PORT(
+		clock : IN STD_LOGIC;
+		reset : IN STD_LOGIC;
+
+		newPlayerCard : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);
+		newDealerCard : IN  STD_LOGIC_VECTOR(3 DOWNTO 0);
+
+		playerCards : OUT STD_LOGIC_VECTOR(15 DOWNTO 0); --player’s hand
+		dealerCards : OUT STD_LOGIC_VECTOR(15 DOWNTO 0); -- dealer’s hand
+		dealerStands : OUT STD_LOGIC; -- true if dealerScore >= 17
+
+		playerWins : OUT STD_LOGIC; -- true if playerScore >  dealerScore AND playerScore <= 21
+		dealerWins : OUT STD_LOGIC; --—- true if dealerScore >= playerScore AND dealerScore <= 21
+
+		playerBust : OUT STD_LOGIC;-- —- true if playerScore > 21
+		dealerBust : OUT STD_LOGIC  --—- true if dealerScore > 21
+	);
+	END COMPONENT;
+
+	COMPONENT FSM IS
+	PORT(
+		clock : IN STD_LOGIC;
+		reset : IN STD_LOGIC;
+
+		nextStep     : IN STD_LOGIC; --—- when true, it advances game to next step
+		playerStands : IN STD_LOGIC;-- —- true if player wants to stand
+		dealerStands : IN STD_LOGIC;-- —- true if dealerScore >= 17
+		playerWins   : IN STD_LOGIC;-- —- true if playerScore >  dealerScore AND playerScore <= 21
+		dealerWins   : IN STD_LOGIC;-- —- true if dealerScore >= playerScore AND dealerScore <= 21
+		playerBust   : IN STD_LOGIC;-- —- true if playerScore > 21
+		dealerBust   : IN STD_LOGIC; -- —- true if dealerScore > 21
+
+		newPlayerCard : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+		newDealerCard : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+
+		redLEDs   : OUT STD_LOGIC_VECTOR(17 DOWNTO 0);
+		greenLEDs : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+	);
+	END COMPONENT;
+
+SIGNAL MYHAND2: STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL DHAND2: STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL DSTAND: STD_LOGIC;
+SIGNAL IWIN: STD_LOGIC;
+SIGNAL DWIN: STD_LOGIC;
+SIGNAL IBUST: STD_LOGIC;
+SIGNAL DBUST: STD_LOGIC;
+SIGNAL MYCARDNUM: STD_LOGIC_VECTOR(3 DOWNTO 0);
+SIGNAL DCARDNUM: STD_LOGIC_VECTOR(3 DOWNTO 0);
+
+BEGIN
+
+	U1: FSM
+		port map(CLOCK_50, KEY(3), KEY(0), SW(0), DSTAND, IWIN, DWIN, IBUST, DBUST, MYCARDNUM, DCARDNUM,
+		LEDR, LEDG);
+
+	U2: DataPath
+		port map(CLOCK_50, KEY(3), MYCARDNUM, DCARDNUM, MYHAND2, DHAND2, DSTAND, IWIN, DWIN, IBUST, DBUST);
+		
+	H0: Card7Seg
+		port map(MYHAND2(3 DOWNTO 0), HEX0);
+		
+	H1: Card7Seg
+		port map(MYHAND2(7 DOWNTO 4), HEX1);
+		
+	H2: Card7Seg
+		port map(MYHAND2(11 DOWNTO 8), HEX2);
+		
+	H3: Card7Seg
+		port map(MYHAND2(15 DOWNTO 12), HEX3);
+		
+	H4: Card7Seg
+		port map(DHAND2(15 DOWNTO 12), HEX4);
+		
+	H5: Card7Seg
+		port map(DHAND2(11 DOWNTO 8), HEX5);
+		
+	H6: Card7Seg
+		port map(DHAND2(7 DOWNTO 4), HEX6);
+		
+	H7: Card7Seg
+		port map(DHAND2(3 DOWNTO 0), HEX7);
+
+END Behavioural;
+
