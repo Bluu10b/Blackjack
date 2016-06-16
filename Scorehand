@@ -1,0 +1,50 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+
+ENTITY scorehand IS
+	PORT(
+	   	scorecardin : IN	STD_LOGIC_VECTOR(15 DOWNTO 0);
+			scoreout: OUT STD_LOGIC_VECTOR(4 DOWNTO 0)
+	);
+END;
+
+architecture behavioural of scorehand is
+BEGIN
+	process(scorecardin)
+	type array_1 is array (0 to 3) of std_LOGIC_VECTOR(5 downto 0);
+	variable cardvalue: array_1;
+	variable scoretotal: std_LOGIC_VECTOR(5 downto 0);
+	begin
+		for i in 0 to 3 loop
+			case scorecardin(3+(4*i) downto 0+(4*i)) is
+				when "0000" => cardvalue(i) := "000000"; --Blank
+				when "0001" => cardvalue(i) := "001011"; --A is 11
+				when "0010" => cardvalue(i) := "000010"; --2
+				when "0011" => cardvalue(i) := "000011"; --3
+				when "0100" => cardvalue(i) := "000100"; --4
+				when "0101" => cardvalue(i) := "000101"; --5
+				when "0110" => cardvalue(i) := "000110"; --6
+				when "0111" => cardvalue(i) := "000111"; --7
+				when "1000" => cardvalue(i) := "001000"; --8
+				when "1001" => cardvalue(i) := "001001"; --9
+				when "1010" => cardvalue(i) := "001010"; --0 for 10
+				when "1011" => cardvalue(i) := "001010"; --J
+				when "1100" => cardvalue(i) := "001010"; --Q
+				when "1101" => cardvalue(i) := "001010"; --K
+				when others => cardvalue(i) := "000000";
+			end case;
+		end loop;
+			scoretotal := STD_LOGIC_VECTOR(unsigned(cardvalue(3)) + unsigned(cardvalue(2)) + unsigned(cardvalue(1)) + unsigned(cardvalue(0)));
+			for k in 0 to 3 loop
+				if (scoretotal > "010101" and cardvalue(k) = "001011") then
+					cardvalue(k) :="000001";
+					scoretotal := STD_LOGIC_VECTOR(unsigned(cardvalue(3)) + unsigned(cardvalue(2)) + unsigned(cardvalue(1)) + unsigned(cardvalue(0)));
+				end if;
+			end loop;
+			
+			scoreout <= scoretotal(4 downto 0);
+	end process;
+
+	
+end behavioural;
