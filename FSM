@@ -1,0 +1,203 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+	ENTITY FSM IS
+	PORT(
+		clock : IN STD_LOGIC;
+		reset : IN STD_LOGIC;
+
+		nextStep     : IN STD_LOGIC; --—- when true, it advances game to next step
+		playerStands : IN STD_LOGIC;-- —- true if player wants to stand
+		dealerStands : IN STD_LOGIC;-- —- true if dealerScore >= 17
+		playerWins   : IN STD_LOGIC;-- —- true if playerScore >  dealerScore AND playerScore <= 21
+		dealerWins   : IN STD_LOGIC;-- —- true if dealerScore >= playerScore AND dealerScore <= 21
+		playerBust   : IN STD_LOGIC;-- —- true if playerScore > 21
+		dealerBust   : IN STD_LOGIC; -- —- true if dealerScore > 21
+
+		newPlayerCard : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+		newDealerCard : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+
+		redLEDs   : OUT STD_LOGIC_VECTOR(17 DOWNTO 0);
+		greenLEDs : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+	);
+	END;
+
+architecture behavioural of FSM is
+		SIGNAL UP: std_LOGIC := '1';
+begin
+	
+	process (clock, reset)
+
+	variable STATE : STD_LOGIC_VECTOR(3 DOWNTO 0) := "0000";
+	constant BeginGame : STD_LOGIC_VECTOR(3 DOWNTO 0) :="0000";
+	constant PlayerCard1: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0001";
+	constant DealerCard1: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0010";
+	constant PlayerCard2: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0011";
+	constant PlayerCard3: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0100";
+	constant PlayerCard4: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0101";
+	constant DealerCard2: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0110";
+	constant DealerCard3: STD_LOGIC_VECTOR(3 DOWNTO 0) :="0111";
+	constant DealerCard4: STD_LOGIC_VECTOR(3 DOWNTO 0) :="1000";
+	constant BOTHEND: STD_LOGIC_VECTOR(3 DOWNTO 0) :="1001";
+	constant YOUWIN: STD_LOGIC_VECTOR(3 DOWNTO 0) :="1010";
+	constant YOULOSE: STD_LOGIC_VECTOR(3 DOWNTO 0) :="1011";
+	constant YOUBOTHLOSE: STD_LOGIC_VECTOR(3 DOWNTO 0) :="1100";
+	
+	begin
+		if (reset ='0') then
+			STATE := BeginGame;
+			newPlayerCard <= "0000";
+			newDealerCard <= "0000";
+			redLEDs <= "000000000000000000";
+			greenLEDs <= "00000000";
+			
+		elsif(rising_edge(clock)) then
+			case STATE is
+
+				when BeginGAME =>
+				newPlayerCard <= "0000";
+				newDealerCard <= "0000";
+				redLEDs <= "111000000000000000";
+				if (NextStep ='1' and UP ='0') then
+					STATE := PlayerCard1;
+				else
+					STATE := BEGINGAME;
+				end if;
+					
+					
+				when PlayerCard1 =>
+				greenLEDs <= "10000000";
+				newPlayerCard <= "0001";
+				if (NextStep ='1' and UP ='0') then
+					STATE := DealerCard1;
+				else
+					STATE := PlayerCard1;
+				end if;
+			
+			
+				when DealerCard1 =>
+				redLEDs <= "100000000000000000";
+				newDealerCard <= "0001";
+				if (NextStep ='1' and UP ='0') then
+					STATE := PlayerCard2;
+				else
+					STATE := DealerCard1;
+				end if;
+					
+					
+				when PlayerCard2 =>
+					greenLEDs <= "11000000";
+					newplayerCard <= "0011";
+					if (NextStep ='1' and UP ='0') then
+						if (PlayerStands ='0') then
+							STATE := PlayerCard3;
+						elsif (PlayerStands ='1') then
+							STATE := DealerCard2;
+						END IF;
+					else	
+						STATE := PlayerCard2;
+					end if;
+					
+					
+				when PlayerCard3 =>
+					greenLEDs <= "11100000";
+					newplayerCard <= "0111";
+					if (NextStep ='1' and UP ='0') then
+						if (PlayerStands ='0' and PlayerBust ='0') then
+							STATE := PlayerCard4;
+						elsif (PlayerStands ='1' or PlayerBust = '1') then
+							if (DealerStands ='0') then
+							STATE := DealerCard2;
+							elsif (DealerStands ='1') then
+							STATE := BOTHEND;
+							end if;
+						end if;
+				else
+					STATE := PlayerCard3;
+				end if;
+			
+			
+				when PlayerCard4 =>
+					greenLEDs <= "11110000";
+					newplayerCard <= "1111";
+					if (NextStep ='1' and UP ='0') then
+							STATE := DealerCard2;
+					else
+						STATE := PlayerCard4;
+					end if;
+			
+				when DealerCard2 =>
+				redLEDs <= "110000000000000000";
+				newDealerCard <= "0011";
+				if (NextStep ='1' and UP ='0') then
+					if (DealerStands ='0') then
+					STATE := DealerCard3;
+					elsif (DealerStands ='1') then
+					STATE := BOTHEND;
+					END IF;
+				else
+					STATE := DealerCard2;
+				end if;
+			
+				when DealerCard3 => --Note: Player stand checked during player's draw
+					redLEDs <= "111000000000000000";
+					newdealerCard <= "0111";
+					if (NextStep ='1' and UP ='0') then
+						if (DealerStands ='0' and DealerBust ='0') then		
+							STATE := DealerCard4;
+						elsif (DealerStands ='1' or DealerBust ='1') then
+							STATE := BOTHEND;
+						end if;
+				else
+					STATE := DealerCard3;
+				end if;
+			
+			
+				when DealerCard4 =>
+					redLEDs <= "111100000000000000";
+					newdealerCard <= "1111";
+					if (NextStep ='1' and UP ='0') then
+						STATE := BOTHEND;
+					else
+						STATE:= DealerCard4;
+					end if;
+			
+				when BOTHEND =>
+					redLEDs <= "000000000000000011";
+					greenLEDs <= "11000000";
+					if (PlayerBust ='1' and DealerBust ='1') then
+						STATE := YOUBOTHLOSE;
+					elsif (PlayerBust ='0' and DealerBust ='1') then
+						STATE := YOUWIN;
+					elsif (PlayerBust ='1' and Dealerbust ='0') then
+						STATE := YOULOSE;
+					elsif (PlayerBust ='0' and DealerBust ='0') then
+						if (PlayerWins ='1') then
+							STATE := YOUWIN;
+						elsif (DealerWins ='1') then
+							STATE := YOULOSE;
+						END IF;
+					end if;
+					
+				when YOULOSE =>
+					redLEDs <= "111111111111111111";
+					greenLEDs <= "00000000";
+					
+				when YOUWIN =>
+					redLEDs <= "000000000000000000";
+					greenLEDs <= "11111111";
+					
+				when YOUBOTHLOSE =>
+					redLEDs <= "111111111111111111";
+					greenLEDs <= "11111111";
+				
+				when others =>
+					redLEDs <= "000000000000000001";
+					greenLEDs <= "10000000";
+			end case;
+			
+			UP <= NextStep;
+		end if;
+		
+	end process;
+end behavioural;
