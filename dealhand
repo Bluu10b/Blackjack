@@ -1,0 +1,29 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+
+ENTITY dealhand IS
+	PORT(
+		clock : IN STD_LOGIC;
+	   drawncard : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
+	    );
+	END;
+	
+architecture behavioural of dealhand is
+	begin
+		process(clock)
+		variable CARDROULETTE: STD_LOGIC_VECTOR(3 DOWNTO 0) := "0000";
+		
+		begin
+			if (rising_edge(clock)) then
+				CARDROULETTE := STD_LOGIC_VECTOR(UNSIGNED(CARDROULETTE) + 1);
+				if (CARDROULETTE > "1101") then
+					CARDROULETTE := "0001";
+				end if;
+				drawncard <= CARDROULETTE;
+				
+			end if;
+		end process;
+		
+end behavioural;
+
